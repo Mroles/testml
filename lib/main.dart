@@ -20,6 +20,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -39,7 +40,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  //static const modelPath = 'assets/mobilenet/mobilenet_v1_1.0_224_quant.tflite';
   static const labelsPath = 'assets/models/label.txt';
 
   static const modelPath = 'assets/models/model.tflite';
@@ -69,6 +69,7 @@ class _HomeState extends State<Home> {
 
   Map<String, int>? classification;
 
+//The initState function is called once this page is loaded
   @override
   void initState() {
     super.initState();
@@ -76,23 +77,32 @@ class _HomeState extends State<Home> {
     //This exits to make the app able to be called from a cold boot
     initUniLink();
 
-    // Load model and labels from assets
+    // Load model and labels from assets once the page loads
     loadModel();
     loadLabels();
   }
 
+  ///Release resources used once we leave the page to prevent performace issues
+  ///(more relevant in a multipage application)
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
+
+    //Cancel the listening stream
     _sub!.cancel();
   }
 
+  ///Function to get the image from the gallery using the ImagePicker package
   Future getImage() async {
     final ImagePicker picker = ImagePicker();
 
     XFile? selectedImage =
+        //this will  get from gallery. Use ImageSource.camera for the camera
         (await picker.pickImage(source: ImageSource.gallery));
+
+    ///Setstate is called to refresh the page once an event happens. In this case,
+    ///we call setstate to load the picture onto the page once the use has selected a picture
     setState(() {
       imag = File(selectedImage!.path);
       Uint8List bytes = imag!.readAsBytesSync();
@@ -101,7 +111,7 @@ class _HomeState extends State<Home> {
     });
   }
 
-  // Load model
+  // Load model using the modified tflite_flutter package
   Future<void> loadModel() async {
     final options = InterpreterOptions();
 
@@ -120,7 +130,7 @@ class _HomeState extends State<Home> {
     // Get tensor input shape [1, 320, 320, 3]
     inputTensor = interpreter.getInputTensors().first;
 
-    // Get tensor output shape [1, 25, 4]
+    // Get tensor output shape
     outputTensor = interpreter.getOutputTensors().first;
 
     setState(() {});
@@ -131,11 +141,14 @@ class _HomeState extends State<Home> {
   // Load labels from assets
   Future<void> loadLabels() async {
     final labelTxt = await rootBundle.loadString(labelsPath);
+    //Split each label with the newline character
     labels = labelTxt.split('\n');
   }
 
-  // Process picked image
+  // Process picked image to be able to pass it into the model
+  //the Image package is used here to allow for image manipulation
   Future<void> processImage() async {
+    ///Clear the Lists that contain the scores and labels
     scores.clear();
     parsedLabels!.clear();
     if (imagePath != null) {
@@ -180,23 +193,25 @@ class _HomeState extends State<Home> {
     final input = [imageMatrix];
 
     // Set tensor output [1, 25]
+    ///Since the Interpreter was modified specifically for this model, the output format does not matter
+    ///But this is the expected output from the model.
     final output = List.filled(25, 0.0);
 
-    // Run inference
+    // Run inference and store the results in a variable
     var res = interpreter.run(input, output);
 
-    // Get result
+    // Get results and put them in lists by score and label index
 
     for (var i = 0; i < res[3][0].length; i++) {
       if (res[3][0][i] != 0) {
-        // Set label: points
+        // Set labels: the model returns the indices of the labels as doubles
+        //so they are rounded
         parsedLabels!.add(labels[res[3][0][i].round()]);
         scores.add(res[0][0][i] * 100);
       }
     }
 
-    // _isLoaded = true;
-
+//SetState is called once again to rebuild the widget tree now that we have the data in the lists
     setState(() {});
   }
 
