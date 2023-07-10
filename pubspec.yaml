@@ -36,6 +36,10 @@ dependencies:
   image:
   image_picker:
   uni_links:
+  path:
+  path_provider:
+  gallery_saver:
+  url_launcher:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
@@ -66,6 +70,8 @@ flutter:
   assets:
     - assets/models/label.txt
     - assets/models/model.tflite
+    - assets/models/MicrosoftTeams-image.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
