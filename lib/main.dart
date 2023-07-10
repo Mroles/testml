@@ -716,7 +716,7 @@ class _HomeState extends State<Home> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: const [
             Image(
               image: AssetImage('assets/models/MicrosoftTeams-image.png'),
               width: 200,
